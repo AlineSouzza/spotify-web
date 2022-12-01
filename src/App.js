@@ -13,6 +13,8 @@ function App() {
   const [albums, setAlbums] = useState([])
   const [tracks, setTracks] = useState([])
   const [selectedAlbum, setSelectedAlbum] = useState("")
+  const [infoTrack, setinfoTrack] = useState(null)
+  const [selectedTrack, setSelectedTrack] = useState("")
 
   //Remove token de acesso quando é deslogado da conta.
   const logout = () => {
@@ -20,7 +22,7 @@ function App() {
     window.localStorage.removeItem("token")
   }
 
-  //Salvaneo de hash no token, caso não houver.
+  //Salvando o hash no token, caso não tenha token.
   useEffect(() => {
     const hash = window.location.hash
     let token = window.localStorage.getItem("token")
@@ -35,6 +37,12 @@ function App() {
     setToken(token)
 
   }, [])
+
+  function millisToMinutesAndSeconds(millis) {
+    var minutes = Math.floor(millis / 60000);
+    var seconds = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+  }
 
   //Realiza pesquisa de Álbuns
   const searchAlbums = async (e) => {
@@ -52,17 +60,10 @@ function App() {
     console.log(data)
 
     setAlbums(data.albums.items)
-
-    console.log(albums)
-
-    searchTracks()
   }
 
   //Busca de faixas do álbum selecionado
-  //TODO: Buscar faixas?
-
   const searchTracks = async (id) => {
-    console.log("https://api.spotify.com/v1/albums/" + id + "/tracks");
     const { data } = await axios.get("https://api.spotify.com/v1/albums/" + id + "/tracks", {
       headers: {
         Authorization: `Bearer ${token}`
@@ -75,19 +76,32 @@ function App() {
     setSelectedAlbum(id)
   }
 
+  const searchInfoTrack = async (id) => {
+    const { data } = await axios.get("https://api.spotify.com/v1/tracks/" + id, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    console.log(data);
+
+    setinfoTrack(data);
+    setSelectedTrack(id);
+  }
+
   const renderAlbums = () => {
     return <div>
       {albums.map(albums => (
-        <div key={albums.id} style={{ display: 'flex', flexDirection: 'row', marginTop: '10px', background: "blue", width: '500px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', background: "pink", width: '150px' }}>
-            <div style={{ background: "green" }}>
-              {albums.images.length ? <img style={{ width: '100px', height: '100px' }} src={albums.images[0].url} alt="" onClick={() => searchTracks(albums.id)} /> : <div>No Image</div>}
+        <div key={albums.id} style={{ display: 'flex', flexDirection: 'row', marginTop: '10px', width: '500px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', width: '150px' }}>
+            <div>
+              {albums.images.length ? <img style={{ width: '150px', height: '150px' }} src={albums.images[0].url} alt="" onClick={() => searchTracks(albums.id)} /> : <div>No Image</div>}
             </div>
-            <div style={{ fontSize: '20px', marginLeft: '10px', alignSelf: 'center', background: "orange" }}>
+            <div style={{ fontSize: '20px', marginLeft: '10px', alignSelf: 'center'}}>
               {albums.name}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', background: "purple", width: '350px' }}>
+          <div style={{ width: '350px' }}>
             {renderTracks(albums.id)}
           </div>
         </div>
@@ -99,9 +113,21 @@ function App() {
     if (selectedAlbum === id) {
       return <div>
         {tracks.map(track => (
-          <div key={track.id}>{track.name}</div>
+          <div key={track.id} onClick={() => searchInfoTrack(track.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: '10px', fontSize: '20px'}}>
+            {track.name}
+            {renderInfoTrack(track.id)}
+          </div>
         ))}
       </div>
+    }
+  }
+
+  const renderInfoTrack = (id) => {
+    if (selectedTrack === id) {
+    return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: '20px', fontSize: '15px'}}>
+      <div>popularidade: {infoTrack.popularity}</div>
+      <div>duração: {millisToMinutesAndSeconds(infoTrack.duration_ms)}</div>
+    </div>
     }
   }
 
