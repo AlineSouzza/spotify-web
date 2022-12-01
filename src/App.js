@@ -12,6 +12,7 @@ function App() {
   const [searchKey, setSearchKey] = useState("")
   const [albums, setAlbums] = useState([])
   const [tracks, setTracks] = useState([])
+  const [selectedAlbum, setSelectedAlbum] = useState("")
 
   //Remove token de acesso quando é deslogado da conta.
   const logout = () => {
@@ -61,31 +62,47 @@ function App() {
   //TODO: Buscar faixas?
 
   const searchTracks = async (id) => {
-    console.log("https://api.spotify.com/v1/albums/"+ id +"/tracks");
-    const { data } = await axios.get("https://api.spotify.com/v1/albums/"+ id +"/tracks", {
+    console.log("https://api.spotify.com/v1/albums/" + id + "/tracks");
+    const { data } = await axios.get("https://api.spotify.com/v1/albums/" + id + "/tracks", {
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
 
-    console.log(data.items);
+    console.log(data);
 
     setTracks(data.items)
+    setSelectedAlbum(id)
   }
 
   const renderAlbums = () => {
     return <div>
       {albums.map(albums => (
-        <div key={albums.id} style={{ display: 'flex', flexDirection: 'column', marginTop: '10px', background: "pink", width: '150px' }}>
-          <div style={{ background: "green" }}>
-            {albums.images.length ? <img style={{ width: '100px', height: '100px' }} src={albums.images[0].url} alt="" onClick={() => searchTracks(albums.id)}  /> : <div>No Image</div>}
+        <div key={albums.id} style={{ display: 'flex', flexDirection: 'row', marginTop: '10px', background: "blue", width: '500px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', background: "pink", width: '150px' }}>
+            <div style={{ background: "green" }}>
+              {albums.images.length ? <img style={{ width: '100px', height: '100px' }} src={albums.images[0].url} alt="" onClick={() => searchTracks(albums.id)} /> : <div>No Image</div>}
+            </div>
+            <div style={{ fontSize: '20px', marginLeft: '10px', alignSelf: 'center', background: "orange" }}>
+              {albums.name}
+            </div>
           </div>
-          <div style={{ fontSize: '20px', marginLeft: '10px', alignSelf: 'center', background: "orange" }}>
-            {albums.name}
+          <div style={{ display: 'flex', flexDirection: 'column', background: "purple", width: '350px' }}>
+            {renderTracks(albums.id)}
           </div>
         </div>
       ))}
     </div>
+  }
+
+  const renderTracks = (id) => {
+    if (selectedAlbum === id) {
+      return <div>
+        {tracks.map(track => (
+          <div key={track.id}>{track.name}</div>
+        ))}
+      </div>
+    }
   }
 
   let mensagem = token ? "Bem-vindo" : "Faça o seu login"
